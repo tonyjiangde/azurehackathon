@@ -549,6 +549,52 @@ function verifyProfile(blob){
 			<button type="button" class="btn btn-primary btn-block" onclick="startListeningForVerification();">
 				Voice Login
 			</button>
+			
+			<video id="player" class="btn-block" controls autoplay></video>
+			<button id="capture" type="button" class="btn btn-primary btn-block">
+				Face Login
+			</button>
+		
+			<canvas id="canvas1" width=320 height=240></canvas>
+			<canvas id="canvas2" width=320 height=240></canvas>
+			<canvas id="canvas3" width=320 height=240></canvas>
+				<script>
+				 const player = document.getElementById('player');
+				  const canvas1 = document.getElementById('canvas1');
+				  const context1 = canvas1.getContext('2d');
+				  const captureButton = document.getElementById('capture');
+				
+				  const constraints = {
+				    video: true,
+				  };
+				
+				  captureButton.addEventListener('click', () => {
+				    // Draw the video frame to the canvas.
+				    context1.drawImage(player, 0, 0, canvas1.width, canvas1.height);
+				    canvas1.toBlob(function(blob) {
+											  var reader3 = new FileReader();
+												reader3.readAsDataURL(blob);
+												var base64data3;
+												var hidden_elem = document.getElementById("j_password");
+												reader3.onloadend = (event) => {
+												    // The contents of the BLOB are in reader.result:
+												    base64data3 = reader3.result;  
+												    console.log(base64data3);              
+												    hidden_elem.value = base64data3;
+											      	console.log(hidden_elem.value);
+												    document.getElementById("myloginform").submit();
+												}
+										  
+										      }, 'image/jpeg');
+				
+				  });
+				
+				  // Attach the video stream to the video element and autoplay.
+				  navigator.mediaDevices.getUserMedia(constraints)
+				    .then((stream) => {
+				      player.srcObject = stream;
+				    });
+				</script>
 		</ycommerce:testId>
 	
 	<c:if test="${expressCheckoutAllowed}">

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------------------------
  * --- WARNING: THIS FILE IS GENERATED AND WILL BE OVERWRITTEN! ---
- * --- Generated at Sep 18, 2019 4:43:47 PM                     ---
+ * --- Generated at Sep 19, 2019 7:41:45 PM                     ---
  * ----------------------------------------------------------------
  *  
  * [y] hybris Platform
@@ -46,6 +46,7 @@ public abstract class GeneratedAzureHackathonCoreManager extends Extension
 		final Map<String, Map<String, AttributeMode>> ttmp = new HashMap();
 		Map<String, AttributeMode> tmp = new HashMap<String, AttributeMode>();
 		tmp.put("vrprofileid", AttributeMode.INITIAL);
+		tmp.put("frpersonid", AttributeMode.INITIAL);
 		ttmp.put("de.hybris.platform.jalo.user.User", Collections.unmodifiableMap(tmp));
 		DEFAULT_INITIAL_ATTRIBUTES = ttmp;
 	}
@@ -215,6 +216,42 @@ public abstract class GeneratedAzureHackathonCoreManager extends Extension
 	public ElectronicsColorVariantProduct createElectronicsColorVariantProduct(final Map attributeValues)
 	{
 		return createElectronicsColorVariantProduct( getSession().getSessionContext(), attributeValues );
+	}
+	
+	/**
+	 * <i>Generated method</i> - Getter of the <code>User.frpersonid</code> attribute.
+	 * @return the frpersonid
+	 */
+	public String getFrpersonid(final SessionContext ctx, final User item)
+	{
+		return (String)item.getProperty( ctx, AzureHackathonCoreConstants.Attributes.User.FRPERSONID);
+	}
+	
+	/**
+	 * <i>Generated method</i> - Getter of the <code>User.frpersonid</code> attribute.
+	 * @return the frpersonid
+	 */
+	public String getFrpersonid(final User item)
+	{
+		return getFrpersonid( getSession().getSessionContext(), item );
+	}
+	
+	/**
+	 * <i>Generated method</i> - Setter of the <code>User.frpersonid</code> attribute. 
+	 * @param value the frpersonid
+	 */
+	public void setFrpersonid(final SessionContext ctx, final User item, final String value)
+	{
+		item.setProperty(ctx, AzureHackathonCoreConstants.Attributes.User.FRPERSONID,value);
+	}
+	
+	/**
+	 * <i>Generated method</i> - Setter of the <code>User.frpersonid</code> attribute. 
+	 * @param value the frpersonid
+	 */
+	public void setFrpersonid(final User item, final String value)
+	{
+		setFrpersonid( getSession().getSessionContext(), item, value );
 	}
 	
 	@Override

@@ -10,6 +10,9 @@
  */
 package de.hybris.azurehackathon.storefront.controllers.pages;
 
+import de.hybris.azurehackathon.core.util.AddFaceResult;
+import de.hybris.azurehackathon.core.util.AzureFaceAPIClient;
+import de.hybris.azurehackathon.core.util.PersonGroupPersonResult;
 import de.hybris.azurehackathon.core.util.SpeakerVerificationRestClient;
 import de.hybris.azurehackathon.core.util.contract.verification.CreateProfileResponse;
 import de.hybris.azurehackathon.core.util.contract.verification.Enrollment;
@@ -517,7 +520,7 @@ public class AccountPageController extends AbstractSearchPageController
 		updateProfileForm.setLastName(customerData.getLastName());
 
 		model.addAttribute("updateProfileForm", updateProfileForm);
-
+		model.addAttribute("uid", customerData.getUid());
 		storeCmsPageInModel(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
 		setUpMetaDataForContentPage(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
 
@@ -529,47 +532,108 @@ public class AccountPageController extends AbstractSearchPageController
 	@RequestMapping(value = "/update-profile", method = RequestMethod.POST)
 	@RequireHardLogIn
 	public String updateProfile(final UpdateProfileForm updateProfileForm, final BindingResult bindingResult, final Model model,
-			final RedirectAttributes redirectAttributes) throws CMSItemNotFoundException
+			final RedirectAttributes redirectAttributes) throws Exception
 	{
-		getProfileValidator().validate(updateProfileForm, bindingResult);
-
-		String returnAction = REDIRECT_TO_UPDATE_PROFILE;
-		final CustomerData currentCustomerData = customerFacade.getCurrentCustomer();
-		final CustomerData customerData = new CustomerData();
-		customerData.setTitleCode(updateProfileForm.getTitleCode());
-		customerData.setFirstName(updateProfileForm.getFirstName());
-		customerData.setLastName(updateProfileForm.getLastName());
-		customerData.setUid(currentCustomerData.getUid());
-		customerData.setDisplayUid(currentCustomerData.getDisplayUid());
-
-		model.addAttribute(TITLE_DATA_ATTR, userFacade.getTitles());
-
-		storeCmsPageInModel(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
-		setUpMetaDataForContentPage(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
-
-		if (bindingResult.hasErrors())
+		if (!org.springframework.util.StringUtils.isEmpty(updateProfileForm.getFile()))
 		{
-			returnAction = setErrorMessagesAndCMSPage(model, UPDATE_PROFILE_CMS_PAGE);
+			System.out.println(updateProfileForm.getFile());
+			final UserModel currentUser = userService.getCurrentUser();
+			final AzureFaceAPIClient client = new AzureFaceAPIClient(
+					configurationService.getConfiguration().getString("azurehackthon2019.facerecognition.key"),
+					configurationService.getConfiguration().getString("azurehackthon2019.facerecognition.endpoint"));
+			if (org.springframework.util.StringUtils.isEmpty(currentUser.getFrpersonid()))
+			{
+
+				final PersonGroupPersonResult pgpr = client.createPersonGroupPerson("customers", currentUser.getUid());
+				currentUser.setFrpersonid(pgpr.getPersonId());
+				modelService.save(currentUser);
+			}
+			final String[] images = updateProfileForm.getFile().split("_hackathon_");
+			if (images.length != 3)
+			{
+				GlobalMessages.addErrorMessage(model, "Need at least 3 images!");
+				return setErrorMessagesAndCMSPage(model, UPDATE_PROFILE_CMS_PAGE);
+			}
+			byte[] decodedByte;
+			for (int i = 0; i < 3; i++)
+			{
+				decodedByte = Base64.getDecoder().decode(images[i].split(",")[1]);
+				final AddFaceResult afr = client.addFace("customers", currentUser.getFrpersonid(), decodedByte);
+				System.out
+						.println("image" + i + " is added to " + currentUser.getFrpersonid() + " with id:" + afr.getPersistedFaceId());
+
+			}
+			System.out.println(client.train("customers"));
+			String status = client.getTrainingStatus("customers").getStatus();
+			while (!status.equals("notstarted") && !status.equals("succeeded") && !status.equals("failed"))
+			{
+				System.out.println(status);
+				Thread.sleep(1000);
+				status = client.getTrainingStatus("customers").getStatus();
+			}
+			status = client.getTrainingStatus("customers").getStatus();
+			System.out.println(status);
+
+			model.addAttribute(TITLE_DATA_ATTR, userFacade.getTitles());
+
+			final CustomerData customerData = customerFacade.getCurrentCustomer();
+
+			model.addAttribute("updateProfileForm", updateProfileForm);
+			model.addAttribute("uid", customerData.getUid());
+			storeCmsPageInModel(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
+			setUpMetaDataForContentPage(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
+
+			model.addAttribute(BREADCRUMBS_ATTR, accountBreadcrumbBuilder.getBreadcrumbs(TEXT_ACCOUNT_PROFILE));
+			model.addAttribute(ThirdPartyConstants.SeoRobots.META_ROBOTS, ThirdPartyConstants.SeoRobots.NOINDEX_NOFOLLOW);
+			GlobalMessages.addErrorMessage(model,
+					"Having Personid:" + currentUser.getFrpersonid() + " and the PersonGroup is trained:" + status);
+			return getViewForPage(model);
+
 		}
 		else
 		{
-			try
-			{
-				customerFacade.updateProfile(customerData);
-				GlobalMessages.addFlashMessage(redirectAttributes, GlobalMessages.CONF_MESSAGES_HOLDER,
-						"text.account.profile.confirmationUpdated", null);
+			getProfileValidator().validate(updateProfileForm, bindingResult);
 
-			}
-			catch (final DuplicateUidException e)
+			String returnAction = REDIRECT_TO_UPDATE_PROFILE;
+			final CustomerData currentCustomerData = customerFacade.getCurrentCustomer();
+			final CustomerData customerData = new CustomerData();
+			customerData.setTitleCode(updateProfileForm.getTitleCode());
+			customerData.setFirstName(updateProfileForm.getFirstName());
+			customerData.setLastName(updateProfileForm.getLastName());
+			customerData.setUid(currentCustomerData.getUid());
+			customerData.setDisplayUid(currentCustomerData.getDisplayUid());
+
+			model.addAttribute(TITLE_DATA_ATTR, userFacade.getTitles());
+
+			storeCmsPageInModel(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
+			setUpMetaDataForContentPage(model, getContentPageForLabelOrId(UPDATE_PROFILE_CMS_PAGE));
+
+			if (bindingResult.hasErrors())
 			{
-				bindingResult.rejectValue("email", "registration.error.account.exists.title");
 				returnAction = setErrorMessagesAndCMSPage(model, UPDATE_PROFILE_CMS_PAGE);
 			}
+			else
+			{
+				try
+				{
+					customerFacade.updateProfile(customerData);
+					GlobalMessages.addFlashMessage(redirectAttributes, GlobalMessages.CONF_MESSAGES_HOLDER,
+							"text.account.profile.confirmationUpdated", null);
+
+				}
+				catch (final DuplicateUidException e)
+				{
+					bindingResult.rejectValue("email", "registration.error.account.exists.title");
+					returnAction = setErrorMessagesAndCMSPage(model, UPDATE_PROFILE_CMS_PAGE);
+				}
+			}
+
+
+			model.addAttribute(BREADCRUMBS_ATTR, accountBreadcrumbBuilder.getBreadcrumbs(TEXT_ACCOUNT_PROFILE));
+			return returnAction;
 		}
 
 
-		model.addAttribute(BREADCRUMBS_ATTR, accountBreadcrumbBuilder.getBreadcrumbs(TEXT_ACCOUNT_PROFILE));
-		return returnAction;
 	}
 
 	@RequestMapping(value = "/update-password", method = RequestMethod.GET)

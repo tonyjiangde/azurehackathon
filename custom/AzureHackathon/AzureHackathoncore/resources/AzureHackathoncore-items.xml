@@ -44,7 +44,11 @@
 					<persistence type="property"/>
                     <modifiers read="true" write="true" search="false" optional="true"/>
 				</attribute>
-			</attributes>
+				<attribute qualifier="frpersonid" type="java.lang.String">
+					<persistence type="property"/>
+                    <modifiers read="true" write="true" search="false" optional="true"/>
+				</attribute>
+			</attributes>	
 		</itemtype>
 
 		<itemtype code="AzureHackthonSearchBoxComponent" extends="SearchBoxComponent"
