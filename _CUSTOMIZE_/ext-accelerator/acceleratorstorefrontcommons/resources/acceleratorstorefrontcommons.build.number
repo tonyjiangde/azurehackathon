@@ -1,0 +1,9 @@
+#Ant properties
+#Fri Jul 05 09:12:12 CEST 2019
+builddate=20190705 0910
+description=acceleratorstorefrontcommons
+name=acceleratorstorefrontcommons
+releasedate=20181129 1417
+vendor=hybris
+version=1811.9
+version.api=1811
