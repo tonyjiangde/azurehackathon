@@ -13,6 +13,7 @@ package de.hybris.azurehackathon.storefront.security;
 import de.hybris.azurehackathon.core.util.AzureFaceAPIClient;
 import de.hybris.azurehackathon.core.util.DetectResult;
 import de.hybris.azurehackathon.core.util.IdentifyResult;
+import de.hybris.azurehackathon.core.util.PersonResult;
 import de.hybris.azurehackathon.core.util.SpeakerVerificationRestClient;
 import de.hybris.azurehackathon.core.util.contract.verification.Result;
 import de.hybris.azurehackathon.core.util.contract.verification.Verification;
@@ -258,49 +259,39 @@ public class AcceleratorAuthenticationProvider extends AbstractAcceleratorAuthen
 		else if ((authentication.getCredentials() instanceof String)
 				&& ((String) authentication.getCredentials()).startsWith("data:image"))
 		{
-			final String username = (authentication.getPrincipal() == null) ? "NONE_PROVIDED" : authentication.getName();
-			UserModel userModel = null;
-
-			// throw BadCredentialsException if user does not exist
-			try
-			{
-				userModel = getUserService().getUserForUID(StringUtils.lowerCase(username));
-				if (org.springframework.util.StringUtils.isEmpty(userModel.getFrpersonid()))
-				{
-					throw new BadCredentialsException("There is no profile created for this customer!");
-				}
-			}
-			catch (final UnknownIdentifierException e)
-			{
-
-				throw new BadCredentialsException(messages.getMessage(CORE_AUTHENTICATION_PROVIDER_BAD_CREDENTIALS, BAD_CREDENTIALS),
-						e);
-			}
-			// throw BadCredentialsException if the user does not belong to customer user group
-			if (!getUserService().isMemberOfGroup(userModel, getUserService().getUserGroupForUID(Constants.USER.CUSTOMER_USERGROUP)))
-			{
-				throw new BadCredentialsException(messages.getMessage(CORE_AUTHENTICATION_PROVIDER_BAD_CREDENTIALS, BAD_CREDENTIALS));
-			}
+			/*
+			 * final String username = (authentication.getPrincipal() == null) ? "NONE_PROVIDED" :
+			 * authentication.getName(); UserModel userModel = null;
+			 *
+			 * // throw BadCredentialsException if user does not exist try { userModel =
+			 * getUserService().getUserForUID(StringUtils.lowerCase(username)); if
+			 * (org.springframework.util.StringUtils.isEmpty(userModel.getFrpersonid())) { throw new
+			 * BadCredentialsException("There is no profile created for this customer!"); } } catch (final
+			 * UnknownIdentifierException e) {
+			 *
+			 * throw new BadCredentialsException(messages.getMessage(CORE_AUTHENTICATION_PROVIDER_BAD_CREDENTIALS,
+			 * BAD_CREDENTIALS), e); } // throw BadCredentialsException if the user does not belong to customer user group
+			 * if (!getUserService().isMemberOfGroup(userModel,
+			 * getUserService().getUserGroupForUID(Constants.USER.CUSTOMER_USERGROUP))) { throw new
+			 * BadCredentialsException(messages.getMessage(CORE_AUTHENTICATION_PROVIDER_BAD_CREDENTIALS, BAD_CREDENTIALS));
+			 * }
+			 */
 			//======
 			if (Registry.hasCurrentTenant() && JaloConnection.getInstance().isSystemInitialized())
 			{
 
 
-				UserDetails userDetails = null;
-
-				try
-				{
-					userDetails = retrieveUser(username);
-				}
-				catch (final UsernameNotFoundException notFound)
-				{
-					throw new BadCredentialsException(
-							messages.getMessage("CoreAuthenticationProvider.badCredentials", "Bad credentials"), notFound);
-				}
-
-				//getPreAuthenticationChecks().check(userDetails);
-
-				final User user = UserManager.getInstance().getUserByLogin(userDetails.getUsername());
+				/*
+				 * UserDetails userDetails = null;
+				 *
+				 * try { userDetails = retrieveUser(username); } catch (final UsernameNotFoundException notFound) { throw
+				 * new BadCredentialsException( messages.getMessage("CoreAuthenticationProvider.badCredentials",
+				 * "Bad credentials"), notFound); }
+				 *
+				 * //getPreAuthenticationChecks().check(userDetails);
+				 *
+				 * final User user = UserManager.getInstance().getUserByLogin(userDetails.getUsername());
+				 */
 				// FORM based check
 				final Object credential = authentication.getCredentials();
 
@@ -313,19 +304,70 @@ public class AcceleratorAuthenticationProvider extends AbstractAcceleratorAuthen
 					DetectResult[] d;
 					try
 					{
-						d = client.detect(decodedByte, userModel.getUid());
+						d = client.detect(decodedByte, "test");
 						if (d != null && d.length > 0 && d[0] != null
 								&& !org.springframework.util.StringUtils.isEmpty(d[0].getFaceId()))
 						{
 							System.out.println(d[0].getFaceId());
 							final IdentifyResult[] result = client.identify(d[0].getFaceId());
 							if (result != null && result.length == 1 && result[0].getCandidates() != null
-									&& result[0].getCandidates().length == 1
-									&& result[0].getCandidates()[0].getPersonId().equals(userModel.getFrpersonid()))
+									&& result[0].getCandidates().length == 1)
 							{
 								System.out.println("Face identified with id:" + result[0].getCandidates()[0].getPersonId()
 										+ " with confidence: " + result[0].getCandidates()[0].getConfidence());
-								additionalAuthenticationChecks(userDetails, (AbstractAuthenticationToken) authentication);
+
+								final PersonResult pr = client.getPerson(result[0].getCandidates()[0].getPersonId());
+								System.out.println("And the id of the person is: " + pr.getName());
+
+
+
+
+								final String username = pr.getName();
+								UserModel userModel = null;
+
+								// throw BadCredentialsException if user does not exist
+								try
+								{
+									userModel = getUserService().getUserForUID(StringUtils.lowerCase(username));
+									if (org.springframework.util.StringUtils.isEmpty(userModel.getFrpersonid()))
+									{
+										throw new BadCredentialsException("There is no profile created for this customer!");
+									}
+								}
+								catch (final UnknownIdentifierException e)
+								{
+
+									throw new BadCredentialsException(
+											messages.getMessage(CORE_AUTHENTICATION_PROVIDER_BAD_CREDENTIALS, BAD_CREDENTIALS), e);
+								} // throw BadCredentialsException if the user does not belong to customer user group
+								if (!getUserService().isMemberOfGroup(userModel,
+										getUserService().getUserGroupForUID(Constants.USER.CUSTOMER_USERGROUP)))
+								{
+									throw new BadCredentialsException(
+											messages.getMessage(CORE_AUTHENTICATION_PROVIDER_BAD_CREDENTIALS, BAD_CREDENTIALS));
+								}
+
+								//======
+
+
+								UserDetails userDetails = null;
+
+								try
+								{
+									userDetails = retrieveUser(username);
+								}
+								catch (final UsernameNotFoundException notFound)
+								{
+									throw new BadCredentialsException(
+											messages.getMessage("CoreAuthenticationProvider.badCredentials", "Bad credentials"), notFound);
+								}
+
+								//getPreAuthenticationChecks().check(userDetails);
+
+								final User user = UserManager.getInstance().getUserByLogin(userDetails.getUsername());
+
+
+
 								// finally, set user in session
 								JaloSession.getCurrentSession().setUser(user);
 								return createSuccessAuthentication(authentication, userDetails);
@@ -373,6 +415,7 @@ public class AcceleratorAuthenticationProvider extends AbstractAcceleratorAuthen
 
 		}
 		else
+
 		{
 			return super.authenticate(authentication);
 		}

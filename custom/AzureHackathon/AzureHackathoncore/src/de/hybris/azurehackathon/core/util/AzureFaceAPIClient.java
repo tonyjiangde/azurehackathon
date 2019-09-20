@@ -291,5 +291,23 @@ public class AzureFaceAPIClient
 
 	}
 
+	public PersonResult getPerson(final String personId) throws Exception
+	{
+		//https://azurehackationface.cognitiveservices.azure.com/face/v1.0/persongroups/customers/persons/4b6643fe-07a0-46fb-b330-581552b8de4f
+		final String requestUrl = endpoint + "/persongroups/customers/persons/" + personId;
+		final HttpGet request = (HttpGet) this.createHttpRequest(requestUrl, RequestType.GET);
+		final HttpResponse response = defaultHttpClient.execute(request);
+		final String stringResponse = this.httpResponseToString(response);
+		final int statusCode = this.getStatusCode(response);
+		if (statusCode == HttpStatus.SC_OK)
+		{
+			return gson.fromJson(stringResponse, PersonResult.class);
+		}
+		else
+		{
+			throw new Exception(statusCode + ":" + stringResponse);
+		}
+
+	}
 
 }
