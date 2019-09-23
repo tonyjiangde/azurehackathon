@@ -1,6 +1,7 @@
 # azurehackathon
 Azure Hackathon 2019 Shanghai
 
+[Azire cognitive services documentations](https://azure.microsoft.com/en-us/services/cognitive-services/)
 
 **Environment Setup:**
 
@@ -158,3 +159,56 @@ Extentions are built on 1811.9
         model.addAttribute("inkrecognizerkey", Config.getString("azurehackthon2019.inkrecognizer.key", "xxxxxxxxxxx"));
         model.addAttribute("inkrecognizerurl", Config.getString("azurehackthon2019.inkrecognizer.url", "xxxxxxxxxxx"));
 
+
+**Integrate Azure Speaker Recognition:**
+
+1. VerificationProfile needs to be created for each customer at Azure Speaker Recognition Service, to minimize the effort of customization, modify AzureHackathon/AzureHackathonstorefront/web/webroot/WEB-INF/views/responsive/pages/account/accountChangePasswordPage.jsp add UI function for sending recorded voice captured in browser for enroll. At least three times enrollment is needed. The wave file will be encoded in BASE64 format and sent to server in a hidden input element of the updata password form. It has to be noted since authentication needs to happened on server side, so all calls to Speaker Verification API must also be implemented on Server side.
+            
+        <form:hidden path="file" id="myfile" />
+
+2. To allow the data binding, updatePasswordForm.java need to be modified for the hidden voice recording:
+
+        private String file;
+        /**
+         * @return the file
+         */
+        public String getFile()
+        {
+            return file;
+        }
+
+        /**
+         * @param file
+         *           the file to set
+         */
+        public void setFile(final String file)
+        {
+            this.file = file;
+        }
+
+3.  java client for calling Azure services are placed in de.hybris.azurehackathon.core.util e.g. SpeakerVerificationRestClient
+4. Modify the AzureHackathon/AzureHackathonstorefront/web/src/de/hybris/azurehackathon/storefront/controllers/pages/AccountPageController.java, change the updatePassword() method for handling voice enrollment.
+5. Once VerificationProfile is created, customer needs to login via voice, change the AzureHackathon/AzureHackathonstorefront/web/webroot/WEB-INF/tags/responsive/user/login.tag to submit voice as password.
+6. Since accelorator uses Spring security for use authentiction, to minimize the customization, change the AzureHackathon/AzureHackathonstorefront/web/src/de/hybris/azurehackathon/storefront/security/AcceleratorAuthenticationProvider.java, if the entered password is voice then call Azure api for verification.
+7. To correlate the customer with profile id, following attribute is added to user model:
+        
+        <attribute qualifier="vrprofileid" type="java.lang.String">
+            <persistence type="property"/>
+            <modifiers read="true" write="true" search="false" optional="true"/>
+        </attribute>
+
+
+
+**Integrate Azure Face Recognition:**
+
+1. To use face to identify user, we created "customers" user group at azure face service, and for each customer, they can add faces and traing the algoritm . Modify the "PROFILE" page at AzureHackathon/AzureHackathonstorefront/web/webroot/WEB-INF/views/responsive/pages/account/accountProfileEditPage.jsp, Use video to capture three pictures and send to server.
+2. API calls are implemented in AzureFaceAPIClient
+3. Modify the AzureHackathon/AzureHackathonstorefront/web/src/de/hybris/azurehackathon/storefront/controllers/pages/AccountPageController.java, change the updateProfile() method for adding faces to customer.
+4. change the AzureHackathon/AzureHackathonstorefront/web/webroot/WEB-INF/tags/responsive/user/login.tag to add login with images.
+5. Since accelorator uses Spring security for use authentiction, to minimize the customization, change the AzureHackathon/AzureHackathonstorefront/web/src/de/hybris/azurehackathon/storefront/security/AcceleratorAuthenticationProvider.java, if the entered password is image then call Azure api for verification.
+6. To correlate the customer with person id, following attribute is added to user model:
+
+        <attribute qualifier="frpersonid" type="java.lang.String">
+            <persistence type="property"/>
+            <modifiers read="true" write="true" search="false" optional="true"/>
+        </attribute>
