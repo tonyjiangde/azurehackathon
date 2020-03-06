@@ -1,5 +1,5 @@
 {
-    "commerceSuiteVersion":"1811.9",
+    "commerceSuiteVersion":"1905",
     "extensions": [
     	"adaptivesearchsolr",
         "adaptivesearchbackoffice",
