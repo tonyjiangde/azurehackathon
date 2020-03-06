@@ -56,8 +56,6 @@
         "outboundservices",
         "odata2webservices",
         "odata2webservicesfeaturetests",
-        "kymaintegrationbackoffice",
-        "kymaintegrationsampledata",
         "AzureHackathoncore",
         "AzureHackathonfacades",
         "AzureHackathontest",
