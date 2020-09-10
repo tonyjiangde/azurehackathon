@@ -1,0 +1,8 @@
+#Ant properties
+#Mon Apr 13 17:03:13 CEST 2015
+builddate=20150413 1703
+description=hybrisShanghai
+name=hybrisShanghai
+vendor=hybris
+version=5.4.0.2
+version.api=5.4.0

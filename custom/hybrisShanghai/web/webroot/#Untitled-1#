@@ -1,0 +1,11 @@
+import de.hybris.platform.task.model.ScriptingTaskModel;
+import de.hybris.platform.task.*;
+ 
+task = modelService.create(ScriptingTaskModel.class);
+task.scriptURI='model://testtasktony'
+TaskConditionModel cond = modelService.create(TaskConditionModel.class);
+task.setRunnerBean("MyRunner");
+cond.setUniqueID("MyEventArrived");
+task.setConditions( Collections.singleton( cond ) );
+taskService.scheduleTask(task)
+

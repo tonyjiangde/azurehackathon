@@ -64,7 +64,8 @@
         "AzureHackathonfulfilmentprocess",
         "AzureHackathonstorefront",
         "backofficesolrsearch",
-        "backoffice"
+        "backoffice",
+        "hybrisShanghai"
     ],
     "storefrontAddons": [
         {
@@ -131,6 +132,10 @@
 				    "name": "AzureHackathonstorefront",
 				    "contextPath": "/AzureHackathonstorefront"
 				},
+                {
+                    "name": "hybrisShanghai",
+                    "contextPath": "/hybrisShanghai"
+                },
 				{
 				    "name": "acceleratorservices",
 				    "contextPath": "/acceleratorservices"
@@ -225,6 +230,10 @@
                 {
                     "name": "AzureHackathonstorefront",
                     "contextPath": ""
+                },
+                {
+                    "name": "hybrisShanghai",
+                    "contextPath": "/hybrisShanghai"
                 },
                 {
                     "name": "acceleratorservices",
